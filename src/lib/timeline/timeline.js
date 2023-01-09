@@ -67,6 +67,9 @@ class Timeline {
   }
 
   onWheel(e) {
+    if (e.ctrlKey) return;
+    e.preventDefault();
+
     const currentRange = this.calcRange();
     const currentRangeSpan = currentRange[1] - currentRange[0];
     // 'zoomFactor' greater than 1 corresponds to zooming out, less than 1 to zooming in

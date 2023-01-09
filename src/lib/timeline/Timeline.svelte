@@ -19,5 +19,5 @@
     bind:this={canvas}
     {style}
     on:mousemove={timeline.onMouseMove.bind(timeline)}
-    on:wheel|preventDefault={timeline.onWheel.bind(timeline)}
+    on:wheel={timeline.onWheel.bind(timeline)}
 />
