@@ -14,6 +14,12 @@
             e.target.closest(".group")?.classList.remove("open");
             e.target.blur(); // Remove focus from buttons so they're not causing dropdowns to stay shown
         });
+        return () => {
+            for (const g of navElement.querySelectorAll(".group")) {
+                g.removeEventListener("mouseenter", onEnter);
+                g.removeEventListener("mouseleave", onLeave);
+            }
+        };
     });
 </script>
 
