@@ -2,24 +2,27 @@
     import { onMount, tick } from "svelte";
     export let shown, onClosed;
 
+    $: externalShown = shown; // this one reflects desired state from outside
+    let internalShown = shown; // same, but becomes false after fully fading out
     let dialogElement;
 
     const isBrowser = typeof window !== "undefined";
     $: isBrowser && onShownToggled(shown);
 
     function onShownToggled() {
-        if (shown) {
-            // dialogElement may be null in case it's the first render, so await a tick first
-            tick().then(show);
-        } else {
-            dialogElement?.close();
-            dialogElement?.classList.remove("shown");
+        if (externalShown) {
+            internalShown = true;
+            if (dialogElement === undefined) {
+                tick().then(() => dialogElement.showModal());
+            } else {
+                dialogElement.showModal();
+            }
         }
     }
 
-    function show() {
-        dialogElement.showModal();
-        dialogElement.classList.add("shown");
+    // Same as the parent asking us to close
+    function closeWithTransition() {
+        externalShown = false;
     }
 
     // When clicking on the backdrop, close dialog
@@ -30,16 +33,15 @@
         if (outOfBounds) closeWithTransition();
     }
 
-    // Cause the dialog to fade out
-    function closeWithTransition() {
-        dialogElement?.classList.remove("shown");
-    }
-
     // After the dialog finished fading out, run onClosed()
     function onTransitionEnd(e) {
         if (e.propertyName !== "opacity" || e.pseudoElement !== "") return;
         const { opacity } = window.getComputedStyle(e.target);
-        if (opacity == 0) onClosed();
+        if (opacity == 0) {
+            internalShown = false;
+            dialogElement.close();
+            onClosed();
+        }
     }
 
     // Override default Escape behaviour (fade out instead of abruptly closing)
@@ -57,10 +59,11 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <dialog
     bind:this={dialogElement}
+    class:shown={externalShown}
     on:click|self={onDialogClick}
     on:transitionend={onTransitionEnd}
 >
-    {#if shown}<slot />{/if}
+    {#if internalShown}<slot />{/if}
 </dialog>
 
 <style>
@@ -71,7 +74,7 @@
         transition: 0.1s ease;
     }
 
-    dialog:global(.shown)::backdrop {
+    dialog.shown::backdrop {
         opacity: 1;
     }
 
@@ -91,7 +94,7 @@
         opacity: 0;
     }
 
-    dialog:global(.shown) {
+    dialog.shown {
         opacity: 1;
     }
 
