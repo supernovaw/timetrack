@@ -86,13 +86,12 @@
         color: white;
         background-color: #3333;
         backdrop-filter: blur(4px);
-        font: inherit;
         text-align: start;
-        transition: 0.1s ease-out;
-        user-select: none;
-        cursor: pointer;
         border: none;
+        border-radius: 0;
         outline: none;
+        translate: 0 0;
+        box-shadow: none;
     }
 
     button:hover,

@@ -4,7 +4,8 @@
 
     let dialogElement;
 
-    $: onShownToggled(shown);
+    const isBrowser = typeof window !== "undefined";
+    $: isBrowser && onShownToggled(shown);
 
     function onShownToggled() {
         if (shown) {
