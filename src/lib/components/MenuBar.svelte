@@ -1,6 +1,18 @@
 <script>
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
+    import { timelineLog } from "$lib/state";
+    import InitDayDialog from "./dialogs/InitDayDialog.svelte";
+    import popup from "$lib/popups";
+    import formatDuration from "$lib/timeline/durationFormatter";
+
     let navElement;
+    let shownDialog = null; // "init-day" | null
+
+    function closeDialog() {
+        shownDialog = null;
+        // Prevents the button that opened a dialog from re-gaining focus
+        tick().then(() => document.activeElement.blur());
+    }
 
     onMount(() => {
         const onEnter = (e) => e.target.classList.add("open"),
@@ -21,16 +33,60 @@
             }
         };
     });
+
+    $: lastDay = $timelineLog[$timelineLog.length - 1];
+
+    function handleInitDay() {
+        if (lastDay && !lastDay.end) {
+            popup("Last day has to be finished in order to start a new one");
+            return;
+        }
+        shownDialog = "init-day";
+    }
+
+    function handleEditDay() {
+        popup("TODO implement edit day");
+    }
+
+    function handleFinishDay() {
+        if (!lastDay) {
+            popup("Timeline history is empty");
+            return;
+        }
+        const now = +new Date();
+        if (lastDay.end) {
+            const passedTime = now - lastDay.end;
+            const passedTimeStr = formatDuration(passedTime);
+            popup("Last day is already finished (" + passedTimeStr + " ago)");
+            return;
+        }
+        lastDay.end = now;
+        $timelineLog = $timelineLog;
+    }
+
+    function handleContinueDay() {
+        if (!lastDay.end) {
+            popup("Last day is still not finished");
+            return;
+        }
+        lastDay.end = undefined;
+        $timelineLog = $timelineLog;
+    }
+
+    function handleRemoveDay() {
+        popup("TODO implement remove day");
+    }
 </script>
 
 <nav bind:this={navElement}>
     <div class="group">
         Day
         <div class="group-items">
-            <button>Begin</button>
-            <button>Edit</button>
-            <button>Finish</button>
-            <button>Continue</button>
+            <button on:click={handleInitDay}>Begin</button>
+            <button on:click={handleEditDay}>Edit</button>
+            <button on:click={handleFinishDay}>Finish</button>
+            <button on:click={handleContinueDay}>Continue</button>
+            <button on:click={handleRemoveDay}>Remove</button>
         </div>
     </div>
     <div class="group">
@@ -40,6 +96,8 @@
         </div>
     </div>
 </nav>
+
+<InitDayDialog shown={shownDialog === "init-day"} onClosed={closeDialog} />
 
 <style>
     nav {

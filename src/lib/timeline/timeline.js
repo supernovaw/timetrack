@@ -1,5 +1,6 @@
 import render from "./render";
 import { tweenValue } from "./utilities";
+import { timelineLog } from "$lib/state";
 
 class Timeline {
   canvas;
@@ -95,6 +96,11 @@ class Timeline {
   }
 }
 
+const singleton = new Timeline();
+if (typeof window !== "undefined") {
+  timelineLog.subscribe(() => singleton.repaint());
+}
+
 function animationEase(phase) { // used for animating range
   return 1 - Math.pow(1 - phase, 3);
 }
@@ -109,5 +115,5 @@ function getInitialRange() {
 }
 
 export const baselineY = 150;
-export default new Timeline();
+export default singleton;
 

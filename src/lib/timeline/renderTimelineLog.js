@@ -1,3 +1,4 @@
+import moment from "moment";
 import { timelineLog as timelineLogStore } from "../state/index";
 import { baselineY } from "./timeline";
 import { timeToPos, line } from "./utilities";
@@ -6,16 +7,24 @@ import formatDuration from "./durationFormatter";
 let timelineLogValue;
 timelineLogStore.subscribe(v => timelineLogValue = v);
 
+let endOfToday;
+updateEndOfToday();
+function updateEndOfToday() {
+  endOfToday = moment().endOf("day").unix() * 1000 + 1000;
+  const millisLeftInToday = endOfToday - +new Date();
+  setTimeout(updateEndOfToday, millisLeftInToday);
+}
+
 export default function renderTimelineLog(g, w, h, range, mouseX) {
   let hoveredActivity = null;
 
   // Render each day
   for (const day of timelineLogValue) {
-    if (day.end < range[0]) continue;
+    if (day.end < range[0] && day.end) continue;
     if (day.start > range[1]) break;
 
     const dayStartX = timeToPos(day.start, range, w);
-    const dayEndX = timeToPos(day.end, range, w);
+    const dayEndX = timeToPos(day.end || endOfToday, range, w);
     g.strokeStyle = "#777";
     line(g, dayStartX, baselineY + 5.5, dayEndX, baselineY + 5.5, 3);
 
