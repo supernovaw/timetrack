@@ -18,6 +18,7 @@
 <canvas
     bind:this={canvas}
     {style}
+    on:click={timeline.onClick.bind(timeline)}
     on:mousemove={timeline.onMouseMove.bind(timeline)}
     on:wheel={timeline.onWheel.bind(timeline)}
 />

@@ -1,11 +1,12 @@
 import render from "./render";
-import { tweenValue } from "./utilities";
+import { tweenValue, posToTime } from "./utilities";
 import { timelineLog } from "$lib/state";
 
 class Timeline {
   canvas;
   mouse = { x: 0, y: 0 };
   range = getInitialRange();
+  timestampPicker; // { text, callback: timestamp => void } | undefined
 
   rangeAnimation = {
     duration: 300,
@@ -61,6 +62,14 @@ class Timeline {
     this.repaint();
   }
 
+  onClick(e) {
+    this.onMouseMove(e);
+    if (this.timestampPicker) {
+      const time = posToTime(this.mouse.x, this.range, this.canvas.clientWidth);
+      this.timestampPicker.callback(time);
+    }
+  }
+
   onMouseMove(e) {
     this.mouse.x = e.offsetX;
     this.mouse.y = e.offsetY;
@@ -94,11 +103,21 @@ class Timeline {
     this.mouse.y = e.offsetY;
     this.repaint();
   }
+
+  setTimestampPicker(text, callback) {
+    this.timestampPicker = { text, callback };
+    this.repaint();
+  }
+
+  removeTimestampPicker() {
+    this.timestampPicker = undefined;
+    this.repaint();
+  }
 }
 
 const singleton = new Timeline();
 if (typeof window !== "undefined") {
-  timelineLog.subscribe(() => singleton.repaint());
+  timelineLog.subscribe(() => singleton.removeTimestampPicker());
 }
 
 function animationEase(phase) { // used for animating range
