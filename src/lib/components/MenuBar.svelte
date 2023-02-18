@@ -2,11 +2,13 @@
     import { onMount, tick } from "svelte";
     import { timelineLog } from "$lib/state";
     import InitDayDialog from "./dialogs/InitDayDialog.svelte";
-    import popup from "$lib/popups";
-    import formatDuration from "$lib/timeline/durationFormatter";
+    import timeline from "$lib/timeline/timeline";
+    import EditDayDialog from "./dialogs/EditDayDialog.svelte";
+    import { findDayIndex } from "$lib/timeline/utilities";
 
     let navElement;
-    let shownDialog = null; // "init-day" | null
+    let shownDialog = null; // "init-day" | "edit-day" | null
+    let editedDayIndex;
 
     function closeDialog() {
         shownDialog = null;
@@ -23,7 +25,7 @@
         }
         navElement.addEventListener("click", (e) => {
             if (e.target.nodeName !== "BUTTON") return;
-            e.target.closest(".group")?.classList.remove("open");
+            navElement.querySelector(".group.open")?.classList.remove("open");
             e.target.blur(); // Remove focus from buttons so they're not causing dropdowns to stay shown
         });
         return () => {
@@ -37,44 +39,33 @@
     $: lastDay = $timelineLog[$timelineLog.length - 1];
 
     function handleInitDay() {
-        if (lastDay && !lastDay.end) {
-            popup("Last day has to be finished in order to start a new one");
-            return;
-        }
         shownDialog = "init-day";
     }
 
-    function handleEditDay() {
-        popup("TODO implement edit day");
+    function handleEditToday() {
+        editedDayIndex = $timelineLog.length - 1;
+        shownDialog = "edit-day";
+    }
+
+    function handleEditPastDay() {
+        timeline.setTimestampPicker("Choose day to edit", (pickedTimestamp) => {
+            editedDayIndex = findDayIndex($timelineLog, pickedTimestamp);
+            if (editedDayIndex !== -1) {
+                shownDialog = "edit-day";
+                timeline.removeTimestampPicker();
+            }
+        });
     }
 
     function handleFinishDay() {
-        if (!lastDay) {
-            popup("Timeline history is empty");
-            return;
-        }
         const now = +new Date();
-        if (lastDay.end) {
-            const passedTime = now - lastDay.end;
-            const passedTimeStr = formatDuration(passedTime);
-            popup("Last day is already finished (" + passedTimeStr + " ago)");
-            return;
-        }
         lastDay.end = now;
         $timelineLog = $timelineLog;
     }
 
     function handleContinueDay() {
-        if (!lastDay.end) {
-            popup("Last day is still not finished");
-            return;
-        }
         lastDay.end = undefined;
         $timelineLog = $timelineLog;
-    }
-
-    function handleRemoveDay() {
-        popup("TODO implement remove day");
     }
 </script>
 
@@ -82,11 +73,19 @@
     <div class="group">
         Day
         <div class="group-items">
-            <button on:click={handleInitDay}>Begin</button>
-            <button on:click={handleEditDay}>Edit</button>
-            <button on:click={handleFinishDay}>Finish</button>
-            <button on:click={handleContinueDay}>Continue</button>
-            <button on:click={handleRemoveDay}>Remove</button>
+            {#if !lastDay || lastDay.end}
+                <button on:click={handleInitDay}>Start new day</button>
+            {/if}
+            {#if lastDay}
+                <!-- If timeline is not empty -->
+                {#if !lastDay.end}
+                    <button on:click={handleEditToday}>Edit today</button>
+                    <button on:click={handleFinishDay}>Finish today</button>
+                {:else}
+                    <button on:click={handleContinueDay}>Continue last day</button>
+                {/if}
+                <button on:click={handleEditPastDay}>Edit past day</button>
+            {/if}
         </div>
     </div>
     <div class="group">
@@ -98,6 +97,11 @@
 </nav>
 
 <InitDayDialog shown={shownDialog === "init-day"} onClosed={closeDialog} />
+<EditDayDialog
+    shown={shownDialog === "edit-day"}
+    onClosed={closeDialog}
+    dayIndex={editedDayIndex}
+/>
 
 <style>
     nav {
@@ -149,7 +153,7 @@
         border-radius: 0;
         outline: none;
         translate: 0 0;
-        box-shadow: none;
+        min-width: max-content;
     }
 
     button:hover,

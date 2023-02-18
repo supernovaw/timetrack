@@ -24,3 +24,17 @@ export function line(g, x1, y1, x2, y2, width) {
 
   if (width) g.lineWidth = widthOld;
 }
+
+// Returns index of the day to which the timestamp belongs
+export function findDayIndex(timelineLog, timestamp) {
+  const now = +new Date();
+  for (let i = timelineLog.length - 1; i >= 0; i--) {
+    const day = timelineLog[i];
+    const start = day.start;
+    const end = day.end || now;
+    if (start > timestamp) continue;
+    if (end > timestamp) return i;
+    return -1;
+  }
+  return -1;
+}
