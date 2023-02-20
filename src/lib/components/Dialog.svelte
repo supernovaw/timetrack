@@ -35,6 +35,7 @@
 
     // After the dialog finished fading out, run onClosed()
     function onTransitionEnd(e) {
+        if (e.target !== dialogElement) return;
         if (e.propertyName !== "opacity" || e.pseudoElement !== "") return;
         const { opacity } = window.getComputedStyle(e.target);
         if (opacity == 0) {

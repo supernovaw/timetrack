@@ -136,6 +136,11 @@
         pointer-events: none;
     }
 
+    :root[dir="rtl"] .group .group-items {
+        left: unset;
+        right: 0;
+    }
+
     .group:global(.open) .group-items,
     .group-items:focus-within {
         opacity: 1;

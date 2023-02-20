@@ -12,6 +12,8 @@
         popup.disappearPrevented = true;
         $store = $store;
     }
+
+    const rtl = () => (typeof window !== "undefined") ? document.dir === "rtl" : false;
 </script>
 
 <div class="popups-container">
@@ -23,7 +25,7 @@
             on:click={() => remove(popup)}
             on:mouseenter={() => preventDisappearing(popup)}
             in:fly={{ y: -115, duration: 300 }}
-            out:fly={{ x: 200, duration: 500 }}
+            out:fly={{ x: rtl() ? -200 : 200, duration: 500 }}
             animate:flip={{ duration: 300 }}
         >
             {popup.text}
@@ -40,6 +42,11 @@
         flex-direction: column;
         align-items: flex-end;
         pointer-events: none;
+    }
+
+    :global(:root[dir="rtl"]) .popups-container {
+        right: unset;
+        left: 0;
     }
 
     .popup {
@@ -75,8 +82,21 @@
         opacity: 0.15;
     }
 
+    :global(:root[dir="rtl"]) .popup::after {
+        background: linear-gradient(to left, transparent 0%, #fff 100%);
+        animation: expire-rtl 5s linear; /* duration has to match setTimeout */
+        translate: 50% 0;
+        right: unset;
+        left: 0;
+    }
+
     @keyframes expire {
         from { translate: 0% 0 }
         to { translate: 50% 0 }
+    }
+
+    @keyframes expire-rtl {
+        from { translate: 0% 0 }
+        to { translate: -50% 0 }
     }
 </style>
