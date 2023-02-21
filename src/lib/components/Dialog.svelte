@@ -1,6 +1,8 @@
 <script>
-    import { onMount, tick } from "svelte";
+    import { tick } from "svelte";
+
     export let shown, onClosed;
+    export let style = undefined;
 
     $: externalShown = shown; // this one reflects desired state from outside
     let internalShown = shown; // same, but becomes false after fully fading out
@@ -9,14 +11,11 @@
     const isBrowser = typeof window !== "undefined";
     $: isBrowser && onShownToggled(shown);
 
-    function onShownToggled() {
+    async function onShownToggled() {
         if (externalShown) {
             internalShown = true;
-            if (dialogElement === undefined) {
-                tick().then(() => dialogElement.showModal());
-            } else {
-                dialogElement.showModal();
-            }
+            if (dialogElement === undefined) await tick();
+            dialogElement.showModal();
         }
     }
 
@@ -45,16 +44,16 @@
         }
     }
 
+    const getTopmostDialog = () =>
+        document.elementsFromPoint(0, 0).find((el) => el.tagName === "DIALOG");
+
     // Override default Escape behaviour (fade out instead of abruptly closing)
-    onMount(() => {
-        function onKeyDown(e) {
-            if (!shown || e.code !== "Escape") return;
-            e.preventDefault();
-            closeWithTransition();
-        }
-        document.body.addEventListener("keydown", onKeyDown);
-        return () => document.body.removeEventListener("keydown", onKeyDown);
-    });
+    function onKeyDown(e) {
+        if (!shown || e.code !== "Escape") return;
+        e.preventDefault();
+        if (dialogElement !== getTopmostDialog()) return;
+        closeWithTransition();
+    }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -63,9 +62,11 @@
     class:shown={externalShown}
     on:click|self={onDialogClick}
     on:transitionend={onTransitionEnd}
+    {style}
 >
     {#if internalShown}<slot />{/if}
 </dialog>
+<svelte:body on:keydown={onKeyDown} />
 
 <style>
     dialog::backdrop {

@@ -5,11 +5,12 @@ const genId = () => ++total;
 
 export const store = writable([]);
 
-function add(text) {
+function add(text, group) {
     const id = genId();
     const popup = {
         id,
         text,
+        group,
         disappearPrevented: false,
     };
     store.update(arr => { arr.push(popup); return arr; });
@@ -21,7 +22,7 @@ function autoRemove(id) {
     store.update(arr => arr.filter(p => (p.id !== id) || p.disappearPrevented));
 }
 
-export default function popup(text) {
-    const id = add(text);
+export default function popup(text, group = "default") {
+    const id = add(text, group);
     setTimeout(() => autoRemove(id), 5_000); // duration has to match animation
 }

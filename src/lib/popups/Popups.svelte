@@ -3,6 +3,10 @@
     import { fly } from "svelte/transition";
     import { store } from ".";
 
+    // For popups to be displayed in <Dialog>s, they need to be in a separate group
+    export let group = "default";
+    $: popups = $store.filter((p) => p.group === group);
+
     function remove(popup) {
         $store = $store.filter((p) => p.id !== popup.id);
     }
@@ -13,20 +17,20 @@
         $store = $store;
     }
 
-    const rtl = () => (typeof window !== "undefined") ? document.dir === "rtl" : false;
+    const rtl = () => (typeof window !== "undefined" ? document.dir === "rtl" : false);
 </script>
 
 <div class="popups-container">
-    {#each $store as popup (popup.id)}
+    {#each popups as popup (popup.id)}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div
             class="popup"
             class:disappearing={!popup.disappearPrevented}
             on:click={() => remove(popup)}
             on:mouseenter={() => preventDisappearing(popup)}
-            in:fly={{ y: -115, duration: 300 }}
-            out:fly={{ x: rtl() ? -200 : 200, duration: 500 }}
-            animate:flip={{ duration: 300 }}
+            in:fly|local={{ y: -115, duration: 300 }}
+            out:fly|local={{ x: rtl() ? -200 : 200, duration: 500 }}
+            animate:flip|local={{ duration: 300 }}
         >
             {popup.text}
         </div>
@@ -50,6 +54,7 @@
     }
 
     .popup {
+        max-width: min(calc(100vw - 128px), 500px);
         margin-top: 32px;
         margin-inline-end: 32px;
         padding: 32px;
