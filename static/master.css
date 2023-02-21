@@ -2,6 +2,9 @@ html {
     min-height: 100vh;
     color: white;
     background-color: #111;
+
+    /* svg icons */
+    --icon-invalid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23c62136' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E");
 }
 
 body {
@@ -38,4 +41,52 @@ button:disabled {
     color: #777;
     outline: 2px solid transparent;
     cursor: default;
+}
+
+button.icon-button {
+    padding: 8px;
+    display: inline-flex;
+    outline: none;
+    border-radius: 0;
+    background: transparent;
+}
+
+input[type="text"] {
+    padding: 6px 9px;
+    box-sizing: border-box;
+    background-color: #1b1b1b;
+    box-shadow: 0 1px 10px #111a;
+    color: inherit;
+    font: inherit;
+    transition: 0.1s ease-out;
+    border: none;
+    border-radius: 3px;
+    outline: 2px solid transparent;
+}
+
+input[type="text"]:hover,
+input[type="text"]:focus-visible {
+    background-color: #1e1e1e;
+    outline: 2px solid #666;
+}
+
+input[type="text"]:disabled {
+    background-color: #171717;
+    color: #777;
+    outline: 2px solid transparent;
+    cursor: default;
+}
+
+input:not([type=checkbox], [type=radio]) {
+    background-position: center right 0.75rem;
+    background-size: 1rem auto;
+    background-repeat: no-repeat;
+}
+
+:root[dir="rtl"] input:not([type=checkbox], [type=radio]) {
+    background-position: center left 0.75rem;
+}
+
+input:not([type=checkbox], [type=radio])[aria-invalid]:not([aria-invalid=false]) {
+    background-image: var(--icon-invalid);
 }
