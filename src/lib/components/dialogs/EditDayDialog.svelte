@@ -5,11 +5,14 @@
     import moment from "moment";
     import { timelineLog } from "$lib/state";
     import formatDuration from "$lib/timeline/durationFormatter";
+    import ConfirmDialog from "./ConfirmDialog.svelte";
 
     export let shown, onClosed, dayIndex;
 
     $: day = $timelineLog[dayIndex] || day;
     $: dayEnded = !!day?.end;
+
+    let confirmDialog;
 
     function finishDay() {
         shown = false;
@@ -29,9 +32,15 @@
     }
 
     function removeDay() {
-        shown = false;
-        $timelineLog.splice(dayIndex, 1);
-        $timelineLog = $timelineLog;
+        const startedAgo = formatDuration(+new Date() - day.start);
+        confirmDialog = {
+            text: `Confirm removing this day (started: ${startedAgo} ago)`,
+            yesHandler: () => {
+                shown = false;
+                $timelineLog.splice(dayIndex, 1);
+                $timelineLog = $timelineLog;
+            },
+        };
     }
 
     function toggleConsequent() {
@@ -68,6 +77,8 @@
         </div>
     {/if}
 </Dialog>
+
+<ConfirmDialog dialog={confirmDialog} />
 
 <style>
     :global(dialog) > div:not(:first-child) {

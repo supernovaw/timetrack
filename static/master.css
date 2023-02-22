@@ -14,7 +14,7 @@ body {
 }
 
 button {
-    padding: 6px 9px;
+    padding: 6px 9px 7px 9px;
     background-color: #111;
     color: inherit;
     font: inherit;
@@ -41,6 +41,19 @@ button:disabled {
     color: #777;
     outline: 2px solid transparent;
     cursor: default;
+}
+
+button.light {
+    background-color: #222;
+}
+
+button.light:hover,
+button.light:focus-visible {
+    background-color: #272727;
+}
+
+button.light:disabled {
+    background-color: #222;
 }
 
 button.icon-button {

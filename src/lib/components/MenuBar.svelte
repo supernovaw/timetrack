@@ -5,10 +5,14 @@
     import timeline from "$lib/timeline/timeline";
     import EditDayDialog from "./dialogs/EditDayDialog.svelte";
     import { findDayIndex } from "$lib/timeline/utilities";
+    import formatDuration from "$lib/timeline/durationFormatter";
+    import ConfirmDialog from "./dialogs/ConfirmDialog.svelte";
 
     let navElement;
     let shownDialog = null; // "init-day" | "edit-day" | null
     let editedDayIndex;
+
+    let confirmDialog;
 
     function closeDialog() {
         shownDialog = null;
@@ -58,14 +62,24 @@
     }
 
     function handleFinishDay() {
-        const now = +new Date();
-        lastDay.end = now;
-        $timelineLog = $timelineLog;
+        confirmDialog = {
+            text: "Confirm finishing today",
+            yesHandler: () => {
+                lastDay.end = +new Date();
+                $timelineLog = $timelineLog;
+            },
+        };
     }
 
     function handleContinueDay() {
-        lastDay.end = undefined;
-        $timelineLog = $timelineLog;
+        const endedAgo = formatDuration(+new Date() - lastDay.end);
+        confirmDialog = {
+            text: `Confirm continuing last day (ended: ${endedAgo} ago)`,
+            yesHandler: () => {
+                lastDay.end = undefined;
+                $timelineLog = $timelineLog;
+            },
+        };
     }
 </script>
 
@@ -102,6 +116,7 @@
     onClosed={closeDialog}
     dayIndex={editedDayIndex}
 />
+<ConfirmDialog dialog={confirmDialog} />
 
 <style>
     nav {
