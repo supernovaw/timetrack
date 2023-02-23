@@ -7,6 +7,12 @@
         dialog.hidden = true;
         if (yes) dialog.yesHandler();
     }
+
+    function keyDown(e) {
+        if (!dialog || dialog.hidden) return;
+        if (e.code === "KeyY") handle(true);
+        else if (e.code === "KeyN") handle(false);
+    }
 </script>
 
 <Dialog shown={dialog && !dialog.hidden} onClosed={() => (dialog.hidden = true)}>
@@ -16,6 +22,7 @@
         <button on:click={() => handle(false)}>No</button>
     </div>
 </Dialog>
+<svelte:body on:keydown={keyDown} />
 
 <style>
     .text {

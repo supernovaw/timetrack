@@ -12,9 +12,9 @@
     $: isBrowser && onShownToggled(shown);
 
     async function onShownToggled() {
+        await tick();
         if (externalShown) {
             internalShown = true;
-            if (dialogElement === undefined) await tick();
             dialogElement.showModal();
         }
     }
@@ -26,8 +26,8 @@
 
     // When clicking on the backdrop, close dialog
     function onDialogClick(e) {
-        const fracX = e.offsetX / e.target.clientWidth;
-        const fracY = e.offsetY / e.target.clientHeight;
+        const fracX = e.offsetX / e.target.offsetWidth;
+        const fracY = e.offsetY / e.target.offsetHeight;
         const outOfBounds = fracX < 0 || fracY < 0 || fracX > 1 || fracY > 1;
         if (outOfBounds) closeWithTransition();
     }
@@ -60,7 +60,7 @@
 <dialog
     bind:this={dialogElement}
     class:shown={externalShown}
-    on:click|self={onDialogClick}
+    on:mousedown|self={onDialogClick}
     on:transitionend={onTransitionEnd}
     {style}
 >

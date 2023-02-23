@@ -65,7 +65,7 @@ button.icon-button {
 }
 
 input[type="text"] {
-    padding: 6px 9px;
+    padding: 6px 9px 7px 9px;
     box-sizing: border-box;
     background-color: #1b1b1b;
     box-shadow: 0 1px 10px #111a;
@@ -88,6 +88,19 @@ input[type="text"]:disabled {
     color: #777;
     outline: 2px solid transparent;
     cursor: default;
+}
+
+input[type="text"].dark {
+    background-color: #111;
+}
+
+input[type="text"].dark:hover,
+input[type="text"].dark:focus-visible {
+    background-color: #171717;
+}
+
+input[type="text"].dark:disabled {
+    background-color: #111;
 }
 
 input:not([type=checkbox], [type=radio]) {
