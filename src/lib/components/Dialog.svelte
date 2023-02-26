@@ -4,24 +4,38 @@
     export let shown, onClosed;
     export let style = undefined;
 
-    $: externalShown = shown; // this one reflects desired state from outside
-    let internalShown = shown; // same, but becomes false after fully fading out
-    let dialogElement;
+    let dialogEl;
+    let classShown = shown; // CSS class that causes the fade transition
+    let isFadingOut = false;
 
-    const isBrowser = typeof window !== "undefined";
-    $: isBrowser && onShownToggled(shown);
+    $: typeof window !== "undefined" && onShownToggled(shown);
+
+    const getTopmostDialog = () =>
+        document.elementsFromPoint(0, 0).find((el) => el.tagName === "DIALOG");
+    const getComputedOpacity = () => window.getComputedStyle(dialogEl).opacity;
 
     async function onShownToggled() {
         await tick();
-        if (externalShown) {
-            internalShown = true;
-            dialogElement.showModal();
+        if (shown) {
+            dialogEl.showModal();
+            classShown = true;
+        } else {
+            if (dialogEl) startFadingOut();
         }
     }
 
-    // Same as the parent asking us to close
-    function closeWithTransition() {
-        externalShown = false;
+    function startFadingOut() {
+        isFadingOut = true;
+        classShown = false;
+        if (getComputedOpacity() == 0) {
+            // Edge case. onFadeOut will never run on its own, just close immediately
+            onFadedOut();
+        }
+    }
+
+    function onFadedOut() {
+        isFadingOut = false;
+        onClosed();
     }
 
     // When clicking on the backdrop, close dialog
@@ -29,50 +43,42 @@
         const fracX = e.offsetX / e.target.offsetWidth;
         const fracY = e.offsetY / e.target.offsetHeight;
         const outOfBounds = fracX < 0 || fracY < 0 || fracX > 1 || fracY > 1;
-        if (outOfBounds) closeWithTransition();
+        if (outOfBounds) startFadingOut();
     }
 
-    // After the dialog finished fading out, run onClosed()
     function onTransitionEnd(e) {
-        if (e.target !== dialogElement) return;
-        if (e.propertyName !== "opacity" || e.pseudoElement !== "") return;
-        const { opacity } = window.getComputedStyle(e.target);
-        if (opacity == 0) {
-            internalShown = false;
-            dialogElement.close();
-            onClosed();
-        }
+        if (e.pseudoElement !== "") return;
+        if (e.propertyName !== "opacity") return;
+        if (getComputedOpacity() != 0) return;
+        onFadedOut();
     }
-
-    const getTopmostDialog = () =>
-        document.elementsFromPoint(0, 0).find((el) => el.tagName === "DIALOG");
 
     // Override default Escape behaviour (fade out instead of abruptly closing)
     function onKeyDown(e) {
-        if (!shown || e.code !== "Escape") return;
-        e.preventDefault();
-        if (dialogElement !== getTopmostDialog()) return;
-        closeWithTransition();
+        if (shown && e.code === "Escape") {
+            e.preventDefault();
+            if (dialogEl === getTopmostDialog()) startFadingOut();
+        }
     }
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<dialog
-    bind:this={dialogElement}
-    class:shown={externalShown}
-    on:mousedown|self={onDialogClick}
-    on:transitionend={onTransitionEnd}
-    {style}
->
-    {#if internalShown}<slot />{/if}
-</dialog>
+{#if shown || classShown || isFadingOut}
+    <dialog
+        bind:this={dialogEl}
+        class:shown={classShown}
+        on:mousedown|self={onDialogClick}
+        on:transitionend|self={onTransitionEnd}
+        {style}
+    >
+        <slot />
+    </dialog>
+{/if}
 <svelte:body on:keydown={onKeyDown} />
 
 <style>
     dialog::backdrop {
         opacity: 0;
-        background: #0004;
-        backdrop-filter: blur(7px);
+        background: #0008;
         transition: 0.1s ease;
     }
 
