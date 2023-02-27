@@ -21,7 +21,7 @@ export default function formatDuration(millis) {
 // plural(1, "day") === "1 day"
 // plural(1.2, "hour") === "1.2 hours"
 // plural("1.00", "minute") === "1 minute"
-function plural(number, singular, plural = singular + "s") {
+export function plural(number, singular, plural = singular + "s") {
   if (+number === 1) return "1 " + singular;
   return number + " " + plural;
 }

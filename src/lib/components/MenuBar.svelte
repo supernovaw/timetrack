@@ -7,9 +7,10 @@
     import { findDayIndex } from "$lib/timeline/utilities";
     import formatDuration from "$lib/timeline/durationFormatter";
     import ConfirmDialog from "./dialogs/ConfirmDialog.svelte";
+    import EditActivitiesDialog from "./dialogs/EditActivitiesDialog.svelte";
 
     let navElement;
-    let shownDialog = null; // "init-day" | "edit-day" | null
+    let shownDialog = null; // "init-day" | "edit-day" | "edit-activities" | null
     let editedDayIndex;
 
     let confirmDialog;
@@ -81,6 +82,10 @@
             },
         };
     }
+
+    function handleEditActivities() {
+        shownDialog = "edit-activities";
+    }
 </script>
 
 <nav bind:this={navElement}>
@@ -105,7 +110,7 @@
     <div class="group">
         Activities
         <div class="group-items">
-            <button>Edit</button>
+            <button on:click={handleEditActivities}>Edit</button>
         </div>
     </div>
 </nav>
@@ -116,6 +121,7 @@
     onClosed={closeDialog}
     dayIndex={editedDayIndex}
 />
+<EditActivitiesDialog shown={shownDialog === "edit-activities"} onClosed={closeDialog} />
 <ConfirmDialog dialog={confirmDialog} />
 
 <style>
