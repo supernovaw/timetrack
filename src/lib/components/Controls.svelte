@@ -7,11 +7,12 @@
     import InitTaskDialog from "./dialogs/InitTaskDialog.svelte";
     import ConfirmDialog from "./dialogs/ConfirmDialog.svelte";
     import timeline from "$lib/timeline/timeline";
+    import EditTaskDialog from "./dialogs/EditTaskDialog.svelte";
 
     $: lastDay = $timelineLog.at(-1);
     $: lastTask = lastDay?.dayLog.at(-1);
 
-    let shownDialog; // undefined | "init-task"
+    let shownDialog; // undefined | "init-task" | "edit-task"
     const closeDialog = () => (shownDialog = undefined);
 
     let confirmDialog;
@@ -54,6 +55,10 @@
             lastTask.end = timestamp;
             $timelineLog = $timelineLog;
         });
+    }
+
+    function handleEditTask() {
+        shownDialog = "edit-task";
     }
 
     function formatTask(task) {
@@ -108,7 +113,7 @@
                     <div transition:slide|local>
                         <div class="task-status">Current task: {formatCurrentTask(lastTask)}</div>
                         <div class="buttons">
-                            <button>Edit task (TODO)</button>
+                            <button on:click={handleEditTask}>Edit task</button>
                             <button on:click={handleStopTask}>Stop task</button>
                             <button on:click={handleStopTaskInPast}>Stop task (in past)</button>
                         </div>
@@ -120,6 +125,7 @@
 </div>
 
 <InitTaskDialog shown={shownDialog === "init-task"} onClosed={closeDialog} />
+<EditTaskDialog shown={shownDialog === "edit-task"} onClosed={closeDialog} task={lastTask} />
 <ConfirmDialog dialog={confirmDialog} />
 
 <style>

@@ -116,3 +116,7 @@ input:not([type=checkbox], [type=radio]) {
 input:not([type=checkbox], [type=radio])[aria-invalid]:not([aria-invalid=false]) {
     background-image: var(--icon-invalid);
 }
+
+input[type="checkbox"] {
+    cursor: pointer;
+}

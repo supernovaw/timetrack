@@ -1,20 +1,11 @@
 <script>
     import { slide } from "svelte/transition";
     import { timelineLog, activities } from "$lib/state";
-    import Popups from "$lib/popups/Popups.svelte";
     import Dialog from "../Dialog.svelte";
-    import popup from "$lib/popups";
-    import timeline from "$lib/timeline/timeline";
 
-    export let shown, onClosed;
+    export let shown, onClosed, task;
 
     $: onShownToggled(shown);
-    $: lastDay = $timelineLog.at(-1);
-
-    const popupLocal = (msg) => popup(msg, "InitTaskDialog");
-
-    let preventAutoTagAssignment = false;
-    const onTagChecked = () => (preventAutoTagAssignment = true);
 
     let selectedActivity;
     let selectedSubcategory;
@@ -23,60 +14,25 @@
 
     function onShownToggled(shown) {
         if (shown) {
-            selectedActivity = undefined;
-            selectedSubcategory = undefined;
-            selectedTags = [];
-            description = "";
-            preventAutoTagAssignment = false;
+            selectedActivity = $activities.list.find((a) => a.name === task.activityName);
+            selectedSubcategory = task.activitySubcategory;
+            selectedTags = [...task.tags];
+            description = task.description;
         }
     }
 
     function selectActivity(activity) {
         if (selectedActivity !== activity) selectedActivity = activity;
         selectedSubcategory = undefined;
-        if (!preventAutoTagAssignment || selectedTags.length === 0)
-            selectedTags = [...activity.defaultTags];
     }
 
-    function handleStart() {
-        if (!selectedActivity) return popupLocal("Select an activity first");
-
-        onClosed();
-        lastDay.dayLog.push({
-            activityName: selectedActivity.name,
-            activitySubcategory: selectedSubcategory || "",
-            description,
-            tags: [...selectedTags],
-            start: +new Date(),
-        });
+    function handleApply() {
+        task.activityName = selectedActivity.name;
+        task.activitySubcategory = selectedSubcategory || "";
+        task.tags = [...selectedTags];
+        task.description = description;
         $timelineLog = $timelineLog;
-    }
-
-    function handleStartFromPast() {
-        if (!selectedActivity) return popupLocal("Select an activity first");
-
         onClosed();
-        timeline.setTimestampPicker("Select task start", (timestamp) => {
-            if (timestamp > +new Date()) {
-                return popup("Please select a point in past");
-            }
-            if (timestamp < lastDay.start) {
-                return popup("Cannot start a task before the day's start");
-            }
-            const lastTask = lastDay.dayLog.at(-1);
-            if (lastTask && timestamp < lastTask.end) {
-                return popup("Cannot start a task before the previous one's end");
-            }
-
-            lastDay.dayLog.push({
-                activityName: selectedActivity.name,
-                activitySubcategory: selectedSubcategory || "",
-                description,
-                tags: [...selectedTags],
-                start: timestamp,
-            });
-            $timelineLog = $timelineLog;
-        });
     }
 </script>
 
@@ -93,12 +49,12 @@
         {/each}
     </div>
 
-    {#if selectedActivity && selectedActivity.subcategories.length > 0}
+    {#if selectedActivity.subcategories.length > 0}
         <div transition:slide|local style="margin-top: 16px">Select subcategory:</div>
     {/if}
     {#key selectedActivity}
         <div class="subcategories" transition:slide|local>
-            {#each selectedActivity?.subcategories || [] as subcategory (subcategory)}
+            {#each selectedActivity.subcategories as subcategory (subcategory)}
                 <button
                     class:selected={selectedSubcategory === subcategory}
                     on:click={() => (selectedSubcategory = subcategory)}
@@ -113,12 +69,7 @@
         <div>Select tags:</div>
         {#each $activities.tags as tag}
             <label class:selected={selectedTags.includes(tag.name)}>
-                <input
-                    type="checkbox"
-                    value={tag.name}
-                    bind:group={selectedTags}
-                    on:change={onTagChecked}
-                />
+                <input type="checkbox" value={tag.name} bind:group={selectedTags} />
                 <span>{tag.name}</span>
             </label>
         {:else}
@@ -137,11 +88,9 @@
     </div>
 
     <div class="bottom-buttons">
-        <button on:click={handleStart}>Start</button>
-        <button on:click={handleStartFromPast}>Start (from past)</button>
+        <button on:click={handleApply}>Apply</button>
+        <button on:click={onClosed}>Cancel</button>
     </div>
-
-    <Popups group="InitTaskDialog" />
 </Dialog>
 
 <style>
