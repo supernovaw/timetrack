@@ -9,10 +9,12 @@
     import formatDuration from "$lib/timeline/durationFormatter";
     import ConfirmDialog from "./dialogs/ConfirmDialog.svelte";
     import EditActivitiesDialog from "./dialogs/EditActivitiesDialog.svelte";
+    import EditTaskDialog from "./dialogs/EditTaskDialog.svelte";
 
     let navElement;
-    let shownDialog = null; // "init-day" | "edit-day" | "edit-activities" | null
+    let shownDialog = null; // "init-day" | "edit-day" | "edit-task" | "edit-activities" | null
     let editedDayIndex;
+    let editedTask;
 
     let confirmDialog;
 
@@ -147,7 +149,17 @@
 
     function handleInsertTask() {}
 
-    function handleEditTask() {}
+    function handleEditTask() {
+        timeline.setTimestampPicker("Click on a task to edit it", (timestamp) => {
+            const day = $timelineLog[findDayIndex($timelineLog, timestamp)];
+            if (day === undefined) return;
+            const task = day.dayLog[findTaskIndex(day, timestamp)];
+            if (task === undefined) return;
+            timeline.removeTimestampPicker();
+            editedTask = task;
+            shownDialog = "edit-task";
+        });
+    }
 
     function handleShiftTask() {
         timeline.setTimestampPicker("Click on a task's start or end to shift it", (timestamp) => {
@@ -286,6 +298,7 @@
     onClosed={closeDialog}
     dayIndex={editedDayIndex}
 />
+<EditTaskDialog shown={shownDialog === "edit-task"} onClosed={closeDialog} task={editedTask} />
 <EditActivitiesDialog shown={shownDialog === "edit-activities"} onClosed={closeDialog} />
 <ConfirmDialog dialog={confirmDialog} />
 
