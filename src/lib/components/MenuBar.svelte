@@ -88,6 +88,63 @@
         };
     }
 
+    function handleShiftDay() {
+        timeline.setTimestampPicker("Click on a day's start or end to shift it", (timestamp) => {
+            const dayIndex = findDayIndex($timelineLog, timestamp);
+            const day = $timelineLog[dayIndex];
+            if (day === undefined) return;
+
+            let shiftEnd; // false is start, true is end;
+            if (day.end) {
+                const distanceToStart = timestamp - day.start;
+                const distanceToEnd = day.end - timestamp;
+                shiftEnd = distanceToEnd < distanceToStart;
+            } else {
+                shiftEnd = false;
+            }
+
+            if (!shiftEnd) {
+                timeline.setTimestampPicker(`Choose new day's start`, (timestamp) => {
+                    if (timestamp > +new Date()) {
+                        return popup("Please select a point in past");
+                    }
+                    const previousDay = $timelineLog[dayIndex - 1];
+                    if (previousDay && timestamp < previousDay.end) {
+                        return popup("A day cannot start before the previous one's end");
+                    }
+                    const firstTask = day.dayLog[0];
+                    if (firstTask && timestamp > firstTask.start) {
+                        return popup("A day cannot start after its first task's start");
+                    }
+                    if (day.end && timestamp > day.end) {
+                        return popup("A day cannot start after its end");
+                    }
+                    day.start = timestamp;
+                    $timelineLog = $timelineLog;
+                });
+            } else {
+                timeline.setTimestampPicker(`Choose new day's end`, (timestamp) => {
+                    if (timestamp > +new Date()) {
+                        return popup("Please select a point in past");
+                    }
+                    if (timestamp < day.start) {
+                        return popup("A day cannot end before its start");
+                    }
+                    const nextDay = $timelineLog[dayIndex + 1];
+                    if (nextDay && timestamp > nextDay.start) {
+                        return popup("A day cannot end after the next one's start");
+                    }
+                    const lastTask = day.dayLog.at(-1);
+                    if (lastTask && timestamp < lastTask.end) {
+                        return popup("A day cannot end before its last task's end");
+                    }
+                    day.end = timestamp;
+                    $timelineLog = $timelineLog;
+                });
+            }
+        });
+    }
+
     function handleInsertTask() {}
 
     function handleEditTask() {}
@@ -178,6 +235,7 @@
                     <button on:click={handleContinueDay}>Continue last day</button>
                 {/if}
                 <button on:click={handleEditPastDay}>Edit past day</button>
+                <button on:click={handleShiftDay}>Shift</button>
             {/if}
         </div>
     </div>
