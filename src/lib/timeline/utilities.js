@@ -42,6 +42,23 @@ export function findDayIndex(timelineLog, timestamp) {
   return -1;
 }
 
+// Returns index of the task in the day to which the timestamp belongs
+export function findTaskIndex(day, timestamp) {
+  if (timestamp < day.start) return -1;
+  if (day.end && day.end < timestamp) return -1;
+
+  const now = +new Date();
+  for (let i = 0; i < day.dayLog.length; i++) {
+    const task = day.dayLog[i];
+    const start = task.start;
+    const end = task.end || now;
+    if (end < timestamp) continue;
+    if (start < timestamp) return i;
+    return -1;
+  }
+  return -1;
+}
+
 export const endOf = { minute: 0 };
 if (typeof window !== "undefined")
   updateEndOfMinute(true);

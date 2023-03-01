@@ -3,8 +3,9 @@
     import { timelineLog } from "$lib/state";
     import InitDayDialog from "./dialogs/InitDayDialog.svelte";
     import timeline from "$lib/timeline/timeline";
+    import popup from "$lib/popups/";
     import EditDayDialog from "./dialogs/EditDayDialog.svelte";
-    import { findDayIndex } from "$lib/timeline/utilities";
+    import { findDayIndex, findTaskIndex } from "$lib/timeline/utilities";
     import formatDuration from "$lib/timeline/durationFormatter";
     import ConfirmDialog from "./dialogs/ConfirmDialog.svelte";
     import EditActivitiesDialog from "./dialogs/EditActivitiesDialog.svelte";
@@ -63,6 +64,10 @@
     }
 
     function handleFinishDay() {
+        const lastTask = lastDay.dayLog.at(-1);
+        if (lastTask && !lastTask.end) {
+            return popup("Cannot end day with an unfinished task");
+        }
         confirmDialog = {
             text: "Confirm finishing today",
             yesHandler: () => {
@@ -82,6 +87,75 @@
             },
         };
     }
+
+    function handleInsertTask() {}
+
+    function handleEditTask() {}
+
+    function handleShiftTask() {
+        timeline.setTimestampPicker("Click on a task's start or end to shift it", (timestamp) => {
+            const day = $timelineLog[findDayIndex($timelineLog, timestamp)];
+            if (day === undefined) return;
+            const taskIndex = findTaskIndex(day, timestamp);
+            const task = day.dayLog[taskIndex];
+            if (task === undefined) return;
+
+            let shiftEnd; // false is start, true is end;
+            if (task.end) {
+                const distanceToStart = timestamp - task.start;
+                const distanceToEnd = task.end - timestamp;
+                shiftEnd = distanceToEnd < distanceToStart;
+            } else {
+                shiftEnd = false;
+            }
+
+            if (!shiftEnd) {
+                timeline.setTimestampPicker(
+                    `Choose new start of ${task.activityName}`,
+                    (timestamp) => {
+                        if (timestamp > +new Date()) {
+                            return popup("Please select a point in past");
+                        }
+                        if (timestamp < day.start) {
+                            return popup("Cannot start this task before the day's start");
+                        }
+                        if (task.end && timestamp > task.end) {
+                            return popup("A task cannot start after its end");
+                        }
+                        const previousTask = day.dayLog[taskIndex - 1];
+                        if (previousTask && timestamp < previousTask.end) {
+                            return popup("Cannot start this task before the previous task's end");
+                        }
+                        task.start = timestamp;
+                        $timelineLog = $timelineLog;
+                    }
+                );
+            } else {
+                timeline.setTimestampPicker(
+                    `Choose new end of ${task.activityName}`,
+                    (timestamp) => {
+                        if (timestamp > +new Date()) {
+                            return popup("Please select a point in past");
+                        }
+                        if (day.end && timestamp > day.end) {
+                            return popup("A task cannot end after the day's end");
+                        }
+                        if (timestamp < task.start) {
+                            return popup("A task cannot end before its start");
+                        }
+                        const nextTask = day.dayLog[taskIndex + 1];
+                        if (nextTask && timestamp > nextTask.start) {
+                            return popup("Cannot start this task after the next task's start");
+                        }
+                        task.end = timestamp;
+                        $timelineLog = $timelineLog;
+                    }
+                );
+            }
+        });
+    }
+
+    function handleRemoveTask() {}
 
     function handleEditActivities() {
         shownDialog = "edit-activities";
@@ -105,6 +179,15 @@
                 {/if}
                 <button on:click={handleEditPastDay}>Edit past day</button>
             {/if}
+        </div>
+    </div>
+    <div class="group">
+        Tasks
+        <div class="group-items">
+            <button on:click={handleInsertTask}>Insert</button>
+            <button on:click={handleEditTask}>Edit</button>
+            <button on:click={handleShiftTask}>Shift</button>
+            <button on:click={handleRemoveTask}>Remove</button>
         </div>
     </div>
     <div class="group">

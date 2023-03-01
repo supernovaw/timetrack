@@ -1,5 +1,6 @@
 <script>
     import Dialog from "$lib/components/Dialog.svelte";
+    import Popups from "$lib/popups/Popups.svelte";
     import timeline from "$lib/timeline/timeline";
     import popup from "$lib/popups";
     import moment from "moment";
@@ -13,8 +14,15 @@
     $: dayEnded = !!day?.end;
 
     let confirmDialog;
+    const popupLocal = (msg) => popup(msg, "EditDayDialog");
 
     function finishDay() {
+        const lastTask = day.dayLog.at(-1);
+        if (lastTask && !lastTask.end) {
+            popupLocal("Cannot end day with an unfinished task");
+            return;
+        }
+
         shown = false;
         timeline.setTimestampPicker("Select the day's ending time", (pickedTimestamp) => {
             const now = +new Date();
@@ -24,6 +32,10 @@
             }
             if (pickedTimestamp < day.start) {
                 popup("The day cannot end before it started");
+                return;
+            }
+            if (lastTask && pickedTimestamp < lastTask.end) {
+                popup("Cannot end day before a task's end");
                 return;
             }
             day.end = pickedTimestamp;
@@ -76,6 +88,8 @@
             <button on:click={toggleConsequent}>Toggle</button>
         </div>
     {/if}
+
+    <Popups group="EditDayDialog" />
 </Dialog>
 
 <ConfirmDialog dialog={confirmDialog} />
