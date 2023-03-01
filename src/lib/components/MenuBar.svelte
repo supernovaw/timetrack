@@ -52,11 +52,6 @@
         shownDialog = "init-day";
     }
 
-    function handleEditToday() {
-        editedDayIndex = $timelineLog.length - 1;
-        shownDialog = "edit-day";
-    }
-
     function handleEditPastDay() {
         timeline.setTimestampPicker("Choose day to edit", (pickedTimestamp) => {
             editedDayIndex = findDayIndex($timelineLog, pickedTimestamp);
@@ -67,29 +62,8 @@
         });
     }
 
-    function handleFinishDay() {
-        const lastTask = lastDay.dayLog.at(-1);
-        if (lastTask && !lastTask.end) {
-            return popup("Cannot end day with an unfinished task");
-        }
-        confirmDialog = {
-            text: "Confirm finishing today",
-            yesHandler: () => {
-                lastDay.end = +new Date();
-                $timelineLog = $timelineLog;
-            },
-        };
-    }
-
-    function handleContinueDay() {
-        const endedAgo = formatDuration(+new Date() - lastDay.end);
-        confirmDialog = {
-            text: `Confirm continuing last day (ended: ${endedAgo} ago)`,
-            yesHandler: () => {
-                lastDay.end = undefined;
-                $timelineLog = $timelineLog;
-            },
-        };
+    function handleInsertDay() {
+        popup("TODO insert day");
     }
 
     function handleShiftDay() {
@@ -296,17 +270,12 @@
         Day
         <div class="group-items">
             {#if !lastDay || lastDay.end}
-                <button on:click={handleInitDay}>Start new day</button>
+                <button on:click={handleInitDay}>Start</button>
             {/if}
             {#if lastDay}
                 <!-- If timeline is not empty -->
-                {#if !lastDay.end}
-                    <button on:click={handleEditToday}>Edit today</button>
-                    <button on:click={handleFinishDay}>Finish today</button>
-                {:else}
-                    <button on:click={handleContinueDay}>Continue last day</button>
-                {/if}
-                <button on:click={handleEditPastDay}>Edit past day</button>
+                <button on:click={handleEditPastDay}>Edit</button>
+                <button on:click={handleInsertDay}>Insert</button>
                 <button on:click={handleShiftDay}>Shift</button>
             {/if}
         </div>

@@ -8,14 +8,42 @@
     import ConfirmDialog from "./dialogs/ConfirmDialog.svelte";
     import timeline from "$lib/timeline/timeline";
     import EditTaskDialog from "./dialogs/EditTaskDialog.svelte";
+    import EditDayDialog from "./dialogs/EditDayDialog.svelte";
 
     $: lastDay = $timelineLog.at(-1);
     $: lastTask = lastDay?.dayLog.at(-1);
 
-    let shownDialog; // undefined | "init-task" | "edit-task"
+    let shownDialog; // undefined | "edit-today" | "init-task" | "edit-task"
     const closeDialog = () => (shownDialog = undefined);
 
     let confirmDialog;
+
+    function handleContinueDay() {
+        confirmDialog = {
+            text: "Confirm continuing last day",
+            yesHandler: () => {
+                lastDay.end = undefined;
+                $timelineLog = $timelineLog;
+            },
+        };
+    }
+
+    function handleEditToday() {
+        shownDialog = "edit-today";
+    }
+
+    function handleFinishToday() {
+        if (lastTask && !lastTask.end) {
+            return popup("Cannot end day with an unfinished task");
+        }
+        confirmDialog = {
+            text: "Confirm finishing today",
+            yesHandler: () => {
+                lastDay.end = +new Date();
+                $timelineLog = $timelineLog;
+            },
+        };
+    }
 
     function handleInitTask() {
         if ($activities.list.length === 0) {
@@ -83,12 +111,21 @@
     <div class="controls-inner">
         <div class="day-status">
             {#if lastDay === undefined}
-                Timeline is empty. Start a new day to begin.
+                <div transition:slide|local>Timeline is empty. Start a new day to begin.</div>
             {:else if lastDay.end}
-                Last day ended {formatDuration(+new Date() - lastDay.end)} ago
+                <div transition:slide|local>
+                    Last day ended {formatDuration(+new Date() - lastDay.end)} ago
+                    <button on:click={handleContinueDay}>Continue</button>
+                </div>
             {:else}
-                Today started at {moment(lastDay.start).format("MMM DD HH:mm")}
-                ({formatDuration(+new Date() - lastDay.start)} ago)
+                <div transition:slide|local>
+                    Today started at {moment(lastDay.start).format("MMM DD HH:mm")}
+                    ({formatDuration(+new Date() - lastDay.start)} ago)
+                    <div style="display: inline-block">
+                        <button on:click={handleEditToday}>Edit</button>
+                        <button on:click={handleFinishToday}>Finish</button>
+                    </div>
+                </div>
             {/if}
         </div>
 
@@ -124,6 +161,11 @@
     </div>
 </div>
 
+<EditDayDialog
+    shown={shownDialog === "edit-today"}
+    onClosed={closeDialog}
+    dayIndex={$timelineLog.length - 1}
+/>
 <InitTaskDialog shown={shownDialog === "init-task"} onClosed={closeDialog} />
 <EditTaskDialog shown={shownDialog === "edit-task"} onClosed={closeDialog} task={lastTask} />
 <ConfirmDialog dialog={confirmDialog} />
