@@ -1,3 +1,6 @@
+import moment from "moment";
+import timeline from "./timeline";
+
 // As 'phase' goes from 0 to 1, returned value goes from 'numberFrom' to 'numberTo'
 export function tweenValue(numberFrom, numberTo, phase) {
   return numberFrom * (1 - phase) + numberTo * phase;
@@ -37,4 +40,14 @@ export function findDayIndex(timelineLog, timestamp) {
     return -1;
   }
   return -1;
+}
+
+export const endOf = { minute: 0 };
+if (typeof window !== "undefined")
+  updateEndOfMinute(true);
+function updateEndOfMinute(firstRun) {
+  endOf.minute = moment().endOf("minute").unix() * 1000 + 1000;
+  const millisLeftInMinute = endOf.minute - +new Date();
+  setTimeout(updateEndOfMinute, millisLeftInMinute);
+  if (!firstRun) timeline.repaint();
 }
