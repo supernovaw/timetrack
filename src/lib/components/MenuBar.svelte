@@ -5,15 +5,17 @@
     import timeline from "$lib/timeline/timeline";
     import popup from "$lib/popups/";
     import EditDayDialog from "./dialogs/EditDayDialog.svelte";
-    import { findDayIndex, findTaskIndex } from "$lib/timeline/utilities";
+    import { findDayIndex, findTaskIndex, hasOverlap } from "$lib/timeline/utilities";
     import formatDuration from "$lib/timeline/durationFormatter";
     import ConfirmDialog from "./dialogs/ConfirmDialog.svelte";
     import EditActivitiesDialog from "./dialogs/EditActivitiesDialog.svelte";
     import EditTaskDialog from "./dialogs/EditTaskDialog.svelte";
+    import InitTaskDialog from "./dialogs/InitTaskDialog.svelte";
 
     let navElement;
-    let shownDialog = null; // "init-day" | "edit-day" | "edit-task" | "edit-activities" | null
+    let shownDialog = null; // "init-day" | "edit-day" | "insert-task" | "edit-task" | "edit-activities" | null
     let editedDayIndex;
+    let taskInsertTime;
     let editedTask;
 
     let confirmDialog;
@@ -147,7 +149,41 @@
         });
     }
 
-    function handleInsertTask() {}
+    function handleInsertTask() {
+        timeline.setTimestampPicker("Select the task's start", (start) => {
+            const day = $timelineLog[findDayIndex($timelineLog, start)];
+            if (!day) {
+                return popup("A task's start must be inside of a day");
+            }
+            const overlap = findTaskIndex(day, start) !== -1;
+            if (overlap) {
+                return popup("Tasks cannot overlap");
+            }
+
+            timeline.setTimestampPicker("Select the task's end", (end) => {
+                if (end < start) {
+                    return popup("A task cannot end before it started");
+                }
+                const day2 = $timelineLog[findDayIndex($timelineLog, end)];
+                if (!day2) {
+                    return popup("A task's end must be inside of a day");
+                }
+                if (day !== day2) {
+                    return popup("A task cannot end on a different day from its start");
+                }
+                const overlap = findTaskIndex(day2, end) !== -1;
+                if (overlap) {
+                    return popup("Tasks cannot overlap");
+                }
+                const overlapImbetween = hasOverlap(day.dayLog, start, end);
+                if (overlapImbetween) {
+                    return popup("Tasks cannot overlap");
+                }
+                taskInsertTime = { start, end };
+                shownDialog = "insert-task";
+            });
+        });
+    }
 
     function handleEditTask() {
         timeline.setTimestampPicker("Click on a task to edit it", (timestamp) => {
@@ -297,6 +333,11 @@
     shown={shownDialog === "edit-day"}
     onClosed={closeDialog}
     dayIndex={editedDayIndex}
+/>
+<InitTaskDialog
+    shown={shownDialog === "insert-task"}
+    onClosed={closeDialog}
+    predefinedTime={taskInsertTime}
 />
 <EditTaskDialog shown={shownDialog === "edit-task"} onClosed={closeDialog} task={editedTask} />
 <EditActivitiesDialog shown={shownDialog === "edit-activities"} onClosed={closeDialog} />

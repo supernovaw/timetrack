@@ -7,6 +7,7 @@
     import timeline from "$lib/timeline/timeline";
 
     export let shown, onClosed;
+    export let predefinedTime = undefined;
 
     $: onShownToggled(shown);
     $: lastDay = $timelineLog.at(-1);
@@ -78,6 +79,22 @@
             $timelineLog = $timelineLog;
         });
     }
+
+    function handleInsert() {
+        if (!selectedActivity) return popupLocal("Select an activity first");
+
+        onClosed();
+        lastDay.dayLog.push({
+            activityName: selectedActivity.name,
+            activitySubcategory: selectedSubcategory || "",
+            description,
+            tags: [...selectedTags],
+            start: predefinedTime.start,
+            end: predefinedTime.end,
+        });
+        lastDay.dayLog.sort((a, b) => a.start - b.start);
+        $timelineLog = $timelineLog;
+    }
 </script>
 
 <Dialog {shown} {onClosed}>
@@ -137,8 +154,12 @@
     </div>
 
     <div class="bottom-buttons">
-        <button on:click={handleStart}>Start</button>
-        <button on:click={handleStartFromPast}>Start (from past)</button>
+        {#if !predefinedTime}
+            <button on:click={handleStart}>Start</button>
+            <button on:click={handleStartFromPast}>Start (from past)</button>
+        {:else}
+            <button on:click={handleInsert}>Insert</button>
+        {/if}
     </div>
 
     <Popups group="InitTaskDialog" />

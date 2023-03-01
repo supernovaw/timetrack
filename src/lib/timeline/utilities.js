@@ -59,6 +59,15 @@ export function findTaskIndex(day, timestamp) {
   return -1;
 }
 
+// Determines, whether a new item with given start and end would overlap with other items
+// Works on both days and tasks. Assumes proper array order, allows for unfinished items.
+export function hasOverlap(array, start, end) {
+  for (const item of array)
+    if (start <= item.end && end >= (item.start || +new Date()))
+      return true;
+  return false;
+}
+
 export const endOf = { minute: 0 };
 if (typeof window !== "undefined")
   updateEndOfMinute(true);
