@@ -15,6 +15,7 @@
     let navElement;
     let shownDialog = null; // "init-day" | "edit-day" | "insert-task" | "edit-task" | "edit-activities" | null
     let editedDayIndex;
+    let dayInsertTime;
     let taskInsertTime;
     let editedTask;
 
@@ -49,6 +50,7 @@
     $: lastDay = $timelineLog[$timelineLog.length - 1];
 
     function handleInitDay() {
+        dayInsertTime = undefined;
         shownDialog = "init-day";
     }
 
@@ -63,7 +65,31 @@
     }
 
     function handleInsertDay() {
-        popup("TODO insert day");
+        timeline.setTimestampPicker("Select the day's start", (start) => {
+            if (start > +new Date()) {
+                return popup("Please select a point in past");
+            }
+            if (findDayIndex($timelineLog, start) !== -1) {
+                return popup("Days cannot overlap");
+            }
+            timeline.setTimestampPicker("Select the day's end", (end) => {
+                if (end > +new Date()) {
+                    return popup("Please select a point in past");
+                }
+                if (end < start) {
+                    return popup("A day cannot end before it started");
+                }
+                if (findDayIndex($timelineLog, end) !== -1) {
+                    return popup("Days cannot overlap");
+                }
+                if (hasOverlap($timelineLog, start, end)) {
+                    return popup("Days cannot overlap");
+                }
+                timeline.removeTimestampPicker();
+                dayInsertTime = { start, end };
+                shownDialog = "init-day";
+            });
+        });
     }
 
     function handleShiftDay() {
@@ -153,6 +179,7 @@
                 if (overlapImbetween) {
                     return popup("Tasks cannot overlap");
                 }
+                timeline.removeTimestampPicker();
                 taskInsertTime = { start, end };
                 shownDialog = "insert-task";
             });
@@ -297,7 +324,11 @@
     </div>
 </nav>
 
-<InitDayDialog shown={shownDialog === "init-day"} onClosed={closeDialog} />
+<InitDayDialog
+    shown={shownDialog === "init-day"}
+    onClosed={closeDialog}
+    predefinedTime={dayInsertTime}
+/>
 <EditDayDialog
     shown={shownDialog === "edit-day"}
     onClosed={closeDialog}
