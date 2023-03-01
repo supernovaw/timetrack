@@ -13,6 +13,13 @@
         window.addEventListener("resize", onResize);
         return () => window.removeEventListener("resize", onResize);
     });
+
+    function onKeyDown(e) {
+        if (e.code === "Escape") {
+            const noDialogs = document.getElementsByTagName("dialog").length === 0;
+            if (noDialogs) timeline.removeTimestampPicker();
+        }
+    }
 </script>
 
 <canvas
@@ -23,3 +30,4 @@
     on:wheel={timeline.onWheel.bind(timeline)}
     dir="ltr"
 />
+<svelte:body on:keydown={onKeyDown} />
