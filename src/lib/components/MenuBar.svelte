@@ -212,7 +212,31 @@
         });
     }
 
-    function handleRemoveTask() {}
+    function handleRemoveTask() {
+        timeline.setTimestampPicker("Click on a task to remove it", (timestamp) => {
+            const day = $timelineLog[findDayIndex($timelineLog, timestamp)];
+            if (day === undefined) return;
+            const taskIndex = findTaskIndex(day, timestamp);
+            const task = day.dayLog[taskIndex];
+            if (task === undefined) return;
+
+            const dur = task.end && formatDuration(task.end - task.start);
+            const endedAgo = task.end && formatDuration(+new Date() - task.end);
+            const startedAgo = task.end || formatDuration(+new Date() - task.start);
+
+            const text = task.end
+                ? `Confirm removing ${task.activityName} (${dur}, ${endedAgo} ago)`
+                : `Confirm removing ${task.activityName} (started ${startedAgo} ago)`;
+            timeline.removeTimestampPicker();
+            confirmDialog = {
+                text,
+                yesHandler: () => {
+                    day.dayLog.splice(taskIndex, 1);
+                    $timelineLog = $timelineLog;
+                },
+            };
+        });
+    }
 
     function handleEditActivities() {
         shownDialog = "edit-activities";
