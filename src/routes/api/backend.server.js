@@ -2,7 +2,8 @@ import fs from "fs";
 import crypto from "crypto";
 import { error } from "@sveltejs/kit";
 
-const DIR = "user-storage";
+const FS_APP_ROOT = process.env.FS_APP_ROOT ? process.env.FS_APP_ROOT + "/" : "";
+const DIR = FS_APP_ROOT + "user-storage";
 const MAX_USERS = 3;
 let users;
 let cache = {};
@@ -42,7 +43,7 @@ export function register(request) {
         throw error(429);
     }
     const user = crypto.randomBytes(8).hexSlice();
-    users.push(user);
+    users.add(user);
     write(user, { lastSync: 0 });
     return user;
 }
