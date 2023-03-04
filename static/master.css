@@ -120,3 +120,9 @@ input:not([type=checkbox], [type=radio])[aria-invalid]:not([aria-invalid=false])
 input[type="checkbox"] {
     cursor: pointer;
 }
+
+button[aria-busy="true"],
+input[aria-busy="true"] {
+    color: #777;
+    pointer-events: none;
+}
