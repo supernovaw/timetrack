@@ -91,7 +91,10 @@
         if (isLoading) return;
         confirmDialog = {
             text: "Confirm logging out",
-            yesHandler: () => ($synchronization = getSyncInitial()),
+            yesHandler: () => {
+                $synchronization = getSyncInitial();
+                $nonPersistent.tokenInvalid = false;
+            },
         };
     }
 
