@@ -11,9 +11,12 @@
     import EditActivitiesDialog from "./dialogs/EditActivitiesDialog.svelte";
     import EditTaskDialog from "./dialogs/EditTaskDialog.svelte";
     import InitTaskDialog from "./dialogs/InitTaskDialog.svelte";
+    import SynchronizationDialog from "./dialogs/SynchronizationDialog.svelte";
 
     let navElement;
-    let shownDialog = null; // "init-day" | "edit-day" | "insert-task" | "edit-task" | "edit-activities" | null
+    // shownDialog: undefined | "init-day" | "edit-day" | "insert-task" | "edit-task"
+    //     | "edit-activities" | "synchronization"
+    let shownDialog = undefined;
     let editedDayIndex;
     let dayInsertTime;
     let taskInsertTime;
@@ -22,7 +25,7 @@
     let confirmDialog;
 
     function closeDialog() {
-        shownDialog = null;
+        shownDialog = undefined;
         // Prevents the button that opened a dialog from re-gaining focus
         tick().then(() => document.activeElement.blur());
     }
@@ -322,6 +325,12 @@
             <button on:click={handleEditActivities}>Edit</button>
         </div>
     </div>
+    <div class="group">
+        Settings
+        <div class="group-items">
+            <button on:click={() => (shownDialog = "synchronization")}>Synchronisation</button>
+        </div>
+    </div>
 </nav>
 
 <InitDayDialog
@@ -341,6 +350,7 @@
 />
 <EditTaskDialog shown={shownDialog === "edit-task"} onClosed={closeDialog} task={editedTask} />
 <EditActivitiesDialog shown={shownDialog === "edit-activities"} onClosed={closeDialog} />
+<SynchronizationDialog shown={shownDialog === "synchronization"} onClosed={closeDialog} />
 <ConfirmDialog dialog={confirmDialog} />
 
 <style>

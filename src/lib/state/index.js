@@ -1,58 +1,24 @@
 import { writable } from "svelte/store";
 
-const exampleTimelineLog = [
-  {
-    start: 1673154788268,
-    end: 1673155334775,
-    isConsequent: false,
-    dayLog: [
-      {
-        activityName: "programming",
-        activitySubcategory: "sveltekit",
-        description: "developing timetrack",
-        tags: ["self-improvement", "hobby"],
-        start: 1673155172397,
-        end: 1673155219226,
-      }
-    ]
-  }
-]
+const LOCAL_STORAGE_ITEM_NAME = "app:timetrack";
+const isBrowser = typeof window !== "undefined";
+let storageShadow = JSON.parse((isBrowser && localStorage.getItem(LOCAL_STORAGE_ITEM_NAME)) || "{}");
+let initialized = false;
 
-const exampleActivities = {
-  list: [
-    {
-      name: "programming",
-      subcategories: ["sveltekit", "react", "java", "c"],
-      defaultTags: ["hobby"],
-    }, {
-      name: "reading",
-      subcategories: ["book", "wiki", "articles"],
-      defaultTags: ["self-improvement"],
-    }, {
-      name: "gaming",
-      subcategories: ["minecraft", "csgo"],
-      defaultTags: ["entertainment"],
-    }, {
-      name: "walking",
-      subcategories: [],
-      defaultTags: ["routine"],
-    }, {
-      name: "teaching",
-      subcategories: [],
-      defaultTags: ["work", "companionship"],
-    },
-  ],
-  tags: [
-    { name: "self-improvement" },
-    { name: "hobby" },
-    { name: "routine" },
-    { name: "entertainment" },
-    { name: "work" },
-    { name: "companionship" },
-  ],
+function updateLocalStorage(objectKey, value) {
+  if (!isBrowser || !initialized) return;
+  storageShadow[objectKey] = value;
+  localStorage.setItem(LOCAL_STORAGE_ITEM_NAME, JSON.stringify(storageShadow));
 }
 
-// timelineLog is an array of days that make up the history
-export const timelineLog = writable(exampleTimelineLog);
+export const getSyncInitial = () => ({ autoSync: false, lastDataChange: 0, lastSync: 0, lastSyncLocal: 0 });
 
-export const activities = writable(exampleActivities);
+export const timelineLog = writable(storageShadow.timelineLog || []);
+export const activities = writable(storageShadow.activities || { list: [], tags: [] });
+export const synchronization = writable(storageShadow.synchronization || getSyncInitial());
+export const nonPersistent = writable({}); // { tokenInvalid, loading }
+
+timelineLog.subscribe(v => updateLocalStorage("timelineLog", v));
+activities.subscribe(v => updateLocalStorage("activities", v))
+synchronization.subscribe(v => updateLocalStorage("synchronization", v));
+initialized = true;
